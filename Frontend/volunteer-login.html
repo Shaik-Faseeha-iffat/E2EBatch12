@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Volunteer Login | FoodConnect</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-wrapper">
+    <div class="auth-card volunteer-auth">
+      <h2>Volunteer Login</h2>
+      <p>
+        Login to collect and distribute surplus food.
+      </p>
+
+      <input type="text" placeholder="Username">
+      <input type="password" placeholder="Password">
+
+      <button onclick="login('volunteer-dashboard.html')">
+        Login as Volunteer
+      </button>
+
+      <!-- 👇 REGISTRATION LINK -->
+      <p style="margin-top:18px; font-size:14px;">
+        New Volunteer?
+        <a href="volunteer-register.html" style="color:#3b82f6; font-weight:600;">
+          Register here
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>

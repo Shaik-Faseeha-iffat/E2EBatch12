@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Volunteer Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="dash volunteer-head">Volunteer Dashboard</header>
+
+<div class="dashboard-wrapper">
+  <div class="panel" id="content"></div>
+  <p id="approvalStatus"></p>
+  <div id="requestBox"></div>
+</div>
+
+<script>
+const vol = JSON.parse(localStorage.getItem("volunteer"));
+const box = document.getElementById("content");
+
+if(!vol || vol.status !== "APPROVED"){
+  box.innerHTML = `
+    <h3>Access Restricted</h3>
+    <p>Your account is not approved by admin.</p>
+    <p>Please wait for approval to collect food.</p>
+  `;
+} else {
+  box.innerHTML = `
+    <h3>Available Food Request</h3>
+    <p><b>Event:</b> User Submitted Event</p>
+    <p><b>Quantity:</b> 50 People</p>
+    <p><b>Location:</b> Provided by user</p>
+    <button class="success">Accept & Collect</button>
+  `;
+}
+</script>
+
+</body>
+</html>

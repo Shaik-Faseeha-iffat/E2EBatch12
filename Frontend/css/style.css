@@ -1,0 +1,261 @@
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* ===== BASE ===== */
+body {
+  background: #e9edf5;   /* medium-light bluish grey */
+  color: #1e293b;
+}
+
+/* =========================
+   HOME SCREEN
+========================= */
+/* ===== HOME TOP ACCENT ===== */
+
+.top-accent {
+  height: 20px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    #8b5cf6,
+    #3b82f6,
+    #ec4899
+  );
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.overlay-dark {
+  pointer-events: auto;
+}
+
+.home-card {
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
+}
+
+.home-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.home-title {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.home-sub {
+  font-size: 20px;
+  color: #475569;
+  margin-bottom: 50px;
+}
+
+.home-grid {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.home-grid {
+  border-top: 7px solid rgba(99,102,241,0.25);
+  padding-top: 40px;
+}
+
+
+.home-card {
+  width: 260px;
+  padding: 35px 25px;
+  border-radius: 18px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 18px 35px rgba(0,0,0,0.15);
+}
+
+.home-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 28px 45px rgba(0,0,0,0.25);
+}
+
+/* Home card colors */
+.user-card {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.volunteer-card {
+  background: linear-gradient(135deg, #3b82f6, #ec4899);
+}
+
+.admin-card {
+  background: linear-gradient(135deg, #3b82f6, #ec4899 );
+}
+
+/* =========================
+   LOGIN PAGES
+========================= */
+
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-card {
+  background: #ffffff;
+  width: 460px;
+  padding: 50px;
+  border-radius: 18px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+.auth-card h2 {
+  font-size: 26px;
+  margin-bottom: 12px;
+}
+
+.auth-card p {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 28px;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 16px;
+  margin: 14px 0;
+  border-radius: 10px;
+  border: 1px solid #c7d2fe;
+}
+
+.auth-card button {
+  width: 100%;
+  padding: 18px;
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 17px;
+  cursor: pointer;
+  margin-top: 18px;
+}
+.auth-card select {
+  width: 100%;
+  padding: 14px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid #c7d2fe;
+  font-size: 14px;
+  background: #ffffff;
+  color: #1e293b;
+}
+
+
+/* Login button colors */
+.user-auth button {
+  background: linear-gradient(135deg, #3b82f6, #ec4899);
+}
+
+.volunteer-auth button {
+  background: linear-gradient(135deg, #3b82f6, #ec4899);
+}
+
+.admin-auth button {
+  background: linear-gradient(135deg,  #3b82f6, #ec4899);
+}
+
+/* =========================
+   DASHBOARDS
+========================= */
+
+header.dash {
+  background: linear-gradient(135deg, #3b82f6, #ec4899);
+  color: #ffffff;
+  padding: 18px;
+  text-align: center;
+  font-size: 20px;
+}
+
+.panel {
+  background: #ffffff;
+  width: 460px;
+  margin: 50px auto;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 18px 35px rgba(0,0,0,0.15);
+}
+
+.panel input {
+  width: 100%;
+  padding: 14px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid #c7d2fe;
+}
+
+.panel button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  color: white;
+  margin-top: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg,  #3b82f6, #ec4899);
+}
+
+.pa
+/* =========================
+   DASHBOARD LAYOUT FIX
+========================= */
+
+.dashboard-page {
+  background: #e9edf5;
+  min-height: 100vh;
+}
+
+.dashboard-wrapper {
+  display: flex;
+  justify-content: center;
+  padding-top: 60px;
+}
+
+/* Role headers */
+.user-head {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.volunteer-head {
+  background: linear-gradient(135deg, #3b82f6, #ec4899);
+}
+
+.admin-head {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+.card-btn {
+  margin-top: 18px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.18);
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.card-btn:hover {
+  background: rgba(255,255,255,0.28);
+  transform: translateY(-2px);
+}
+

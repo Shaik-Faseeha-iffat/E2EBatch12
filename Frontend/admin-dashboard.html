@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="dash admin-head">Admin Dashboard</header>
+
+<div class="dashboard-wrapper">
+  <div class="panel">
+    <h3>Volunteer Approval</h3>
+
+    <div id="volBox" class="request"></div>
+
+  </div>
+</div>
+
+<script>
+const vol = JSON.parse(localStorage.getItem("volunteer"));
+const box = document.getElementById("volBox");
+
+if(!vol){
+  box.innerHTML = "<p>No volunteer registrations.</p>";
+} else {
+  box.innerHTML = `
+    <p><b>Name:</b> ${vol.name}</p>
+    <p><b>Phone:</b> ${vol.phone}</p>
+    <p><b>Status:</b> ${vol.status}</p>
+    <button onclick="approve()">Approve Volunteer</button>
+  `;
+}
+
+function approve(){
+  vol.status = "APPROVED";
+  localStorage.setItem("volunteer", JSON.stringify(vol));
+  alert("Volunteer approved!");
+}
+</script>
+
+</body>
+</html>

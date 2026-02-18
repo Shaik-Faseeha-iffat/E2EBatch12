@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FoodConnect</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Top Accent Bar -->
+<div class="top-accent"></div>
+
+<div class="home-container">
+  <h1 class="home-title">FoodConnect</h1>
+  <p class="home-sub">
+    Smart Event Food Redistribution System
+  </p>
+
+  <div class="home-grid">
+
+    <div class="home-card user-card" onclick="go('user-login.html')">
+      <h2>User</h2>
+      <p>Report leftover food after events</p>
+    </div>
+
+    <div class="home-card volunteer-card" onclick="go('volunteer-login.html')">
+      <h2>Volunteer</h2>
+      <p>Collect & distribute surplus food</p>
+    </div>
+
+    <div class="home-card admin-card" onclick="go('admin-login.html')">
+      <h2>Admin</h2>
+      <p>Manage users, volunteers & reports</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function go(page) {
+    window.location.href = page;
+  }
+</script>
+
+</body>
+</html>
