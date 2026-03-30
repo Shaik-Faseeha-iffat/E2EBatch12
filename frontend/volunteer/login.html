@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Volunteer Login</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="auth-body">
+
+<div class="overlay"></div>
+
+<div class="auth-container">
+  <h2>Volunteer Login</h2>
+
+  <form id="loginForm">
+    <input type="email" placeholder="Email" id="email" required>
+    <input type="password" placeholder="Password" id="password" required>
+    <button type="submit">Login</button>
+  </form>
+
+  <div id="message"></div>
+</div>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const res = await fetch("http://localhost:5000/api/volunteer/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      email: email.value,
+      password: password.value
+    })
+  });
+
+  const data = await res.json();
+  const message = document.getElementById("message");
+
+  if(data.token){
+    message.innerHTML = '<div style="color: green; font-weight: bold; text-align: center;">✓ Login Successful</div>';
+    localStorage.setItem("token", data.token);
+    setTimeout(() => window.location.href = "dashboard.html", 2000);
+  } else {
+    message.innerHTML = '<div style="color: red; text-align: center;">' + data.message + '</div>';
+  }
+});
+</script>
+
+</body>
+</html>

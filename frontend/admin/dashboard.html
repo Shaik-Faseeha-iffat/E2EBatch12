@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard - FoodConnect</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body class="dashboard-body">
+
+<div class="dashboard-wrapper">
+
+  <div class="dashboard-header admin-header">
+    <h2>Admin Dashboard</h2>
+    <button onclick="logout()" class="logout-btn compact-logout">⎋ Logout</button>
+  </div>
+
+  <div class="dashboard-content admin-grid">
+
+    <div class="card admin-card top-card">
+      <h3>👥 Pending Volunteers</h3>
+      <div id="volunteersList">
+        <p class="info">Loading volunteers...</p>
+      </div>
+    </div>
+
+    <div class="card admin-card top-card">
+      <h3>📦 Pending Food Requests</h3>
+      <div id="requestsList">
+        <p class="info">Loading requests...</p>
+      </div>
+    </div>
+
+    <div class="card admin-card">
+      <h3>✅ Approved Volunteers</h3>
+      <div id="approvedVolunteersList">
+        <p class="info">Loading approved volunteers...</p>
+      </div>
+    </div>
+
+    <div class="card admin-card">
+      <h3>🧾 Approved Food Requests</h3>
+      <div id="approvedRequestsList">
+        <p class="info">Loading approved requests...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p id="message" style="text-align: center; margin-top: 20px;"></p>
+
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+if (!token) {
+  window.location.href = "login.html";
+}
+
+const API_BASE = "http://localhost:5000/api/admin";
+
+function formatStatus(status) {
+  const value = status || "pending";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function renderVolunteerList(containerId, volunteers, isApprovedList = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  if (!Array.isArray(volunteers) || volunteers.length === 0) {
+    container.innerHTML = `<p class="info">No ${isApprovedList ? "approved" : "pending"} volunteers found.</p>`;
+    return;
+  }
+
+  volunteers.forEach(vol => {
+    const div = document.createElement("div");
+    div.className = "list-item";
+    const volunteerName = vol.name || vol.fullName || vol.username || (vol.email ? vol.email.split('@')[0] : "Volunteer");
+
+    div.innerHTML = `
+      <div class="item-details">
+        <p><strong>Volunteer Name:</strong> ${volunteerName}</p>
+        <p><strong>Email:</strong> ${vol.email || "N/A"}</p>
+        <p><strong>Phone:</strong> ${vol.phone || "N/A"}</p>
+        <p><strong>Status:</strong> <span class="status ${vol.approved ? "approved" : "pending"}">${vol.approved ? "Approved" : "Pending"}</span></p>
+      </div>
+      ${!isApprovedList ? `<div class="item-actions"><button class="secondary-btn" onclick="approveVolunteer('${vol._id}')">Approve</button></div>` : ""}
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderRequestList(containerId, requests, isApprovedList = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  if (!Array.isArray(requests) || requests.length === 0) {
+    container.innerHTML = `<p class="info">No ${isApprovedList ? "approved" : "pending"} food requests found.</p>`;
+    return;
+  }
+
+  requests.forEach(req => {
+    const currentStatus = req.status || "pending";
+    const statusClass = ["approved", "accepted", "delivered"].includes(currentStatus) ? "approved" : "pending";
+
+    const div = document.createElement("div");
+    div.className = "list-item";
+    div.innerHTML = `
+      <div class="item-details">
+        <p><strong>Username:</strong> ${req.userId ? req.userId.username : "Unknown User"}</p>
+        <p><strong>Email:</strong> ${req.userId ? req.userId.email : "No email"}</p>
+        <p><strong>Food Type:</strong> ${req.foodType || "N/A"}</p>
+        <p><strong>Quantity:</strong> ${req.quantity || "N/A"}</p>
+        <p><strong>Location:</strong> ${req.location || "N/A"}</p>
+        <p><strong>Status:</strong> <span class="status ${statusClass}">${formatStatus(currentStatus)}</span></p>
+        ${req.volunteerId ? `<p><strong>Volunteer:</strong> ${req.volunteerId.name || req.volunteerId.email || "Assigned"}</p>` : ""}
+      </div>
+      ${!isApprovedList ? `<div class="item-actions"><button class="secondary-btn" onclick="approveRequest('${req._id}')">Approve</button></div>` : ""}
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function fetchVolunteers() {
+  try {
+    const res = await fetch(`${API_BASE}/volunteers`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const volunteers = await res.json();
+    renderVolunteerList("volunteersList", volunteers, false);
+  } catch (error) {
+    document.getElementById("volunteersList").innerHTML = "<p class='info'>Error loading volunteers.</p>";
+  }
+}
+
+async function fetchApprovedVolunteers() {
+  try {
+    const res = await fetch(`${API_BASE}/approved-volunteers`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const volunteers = await res.json();
+    renderVolunteerList("approvedVolunteersList", volunteers, true);
+  } catch (error) {
+    document.getElementById("approvedVolunteersList").innerHTML = "<p class='info'>Error loading approved volunteers.</p>";
+  }
+}
+
+async function fetchRequests() {
+  try {
+    const res = await fetch(`${API_BASE}/requests`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const requests = await res.json();
+    renderRequestList("requestsList", requests, false);
+  } catch (error) {
+    document.getElementById("requestsList").innerHTML = "<p class='info'>Error loading food requests.</p>";
+  }
+}
+
+async function fetchApprovedRequests() {
+  try {
+    const res = await fetch(`${API_BASE}/approved-requests`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const requests = await res.json();
+    renderRequestList("approvedRequestsList", requests, true);
+  } catch (error) {
+    document.getElementById("approvedRequestsList").innerHTML = "<p class='info'>Error loading approved requests.</p>";
+  }
+}
+
+async function approveVolunteer(id) {
+  try {
+    const res = await fetch(`${API_BASE}/approve-volunteer/${id}`, {
+      method: "PUT",
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const data = await res.json();
+    const message = document.getElementById("message");
+    message.innerText = data.message || "Volunteer approved successfully.";
+    message.style.color = res.ok ? "#16a34a" : "#dc2626";
+
+    if (res.ok) {
+      loadDashboard();
+    }
+  } catch (error) {
+    const message = document.getElementById("message");
+    message.innerText = "Error approving volunteer.";
+    message.style.color = "#dc2626";
+  }
+}
+
+async function approveRequest(id) {
+  try {
+    const res = await fetch(`${API_BASE}/approve-request/${id}`, {
+      method: "PUT",
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const data = await res.json();
+    const message = document.getElementById("message");
+    message.innerText = data.message || "Request approved successfully.";
+    message.style.color = res.ok ? "#16a34a" : "#dc2626";
+
+    if (res.ok) {
+      loadDashboard();
+    }
+  } catch (error) {
+    const message = document.getElementById("message");
+    message.innerText = "Error approving request.";
+    message.style.color = "#dc2626";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+}
+
+function loadDashboard() {
+  fetchVolunteers();
+  fetchApprovedVolunteers();
+  fetchRequests();
+  fetchApprovedRequests();
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>

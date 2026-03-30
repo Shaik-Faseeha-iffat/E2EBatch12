@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Dashboard - FoodConnect</title>
+  <link rel="stylesheet" href="../css/style.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // ================= GLOBAL VARIABLES =================
+    let map = null;
+    let marker = null;
+    let token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "login.html";
+    }
+
+    // ================= REVERSE GEOCODE FUNCTION =================
+    async function reverseGeocode(lat, lng) {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+          {
+            headers: {
+              'User-Agent': 'FoodConnect/1.0'
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        document.getElementById("finalLocation").value = address;
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        document.getElementById("finalLocation").value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      }
+    }
+
+    // ================= CREATE MAP FUNCTION =================
+    function createMap(lat, lng) {
+      console.log('Creating map at:', lat, lng);
+
+      if (map) {
+        map.remove();
+        map = null;
+      }
+
+      map = L.map('map').setView([lat, lng], 15);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+      marker.on('dragend', function() {
+        const position = marker.getLatLng();
+        reverseGeocode(position.lat, position.lng);
+      });
+
+      document.getElementById("map").classList.add("active");
+      reverseGeocode(lat, lng);
+    }
+
+    // ================= GET LOCATION FUNCTION =================
+    function getLocation() {
+      console.log("getLocation called - checking geolocation support");
+      
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      console.log("Requesting position...");
+      
+      navigator.geolocation.getCurrentPosition(
+        function successCallback(position) {
+          console.log("✓ Position received:", position.coords);
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          console.log("Lat:", lat, "Lng:", lng);
+          createMap(lat, lng);
+        },
+        function errorCallback(error) {
+          console.error("✗ Geolocation error code:", error.code);
+          console.error("✗ Error message:", error.message);
+          
+          let errorMsg = "";
+          if (error.code === 1) {
+            errorMsg = "Location permission DENIED. You need to allow location access in your browser settings.";
+          } else if (error.code === 2) {
+            errorMsg = "Unable to retrieve location. Make sure location services are enabled.";
+          } else if (error.code === 3) {
+            errorMsg = "Location request timed out.";
+          } else {
+            errorMsg = "Location error: " + error.message;
+          }
+          
+          console.error("Error:", errorMsg);
+          alert(errorMsg);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    // ================= LOGOUT FUNCTION =================
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+    }
+
+    // ================= FETCH REQUESTS FUNCTION =================
+    async function fetchMyRequests() {
+      try {
+        const response = await fetch("http://localhost:5000/api/user/my-requests", {
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const requests = await response.json();
+        const container = document.getElementById("requestsContainer");
+
+        if (!Array.isArray(requests) || requests.length === 0) {
+          container.innerHTML = "<p>No requests found. Submit your first food request!</p>";
+          return;
+        }
+
+        container.innerHTML = "";
+        requests.forEach(req => {
+          const div = document.createElement("div");
+          div.className = "request-item";
+          div.innerHTML = `
+            <p><strong>Food:</strong> ${req.foodType}</p>
+            <p><strong>Quantity:</strong> ${req.quantity}</p>
+            <p><strong>Location:</strong> ${req.location}</p>
+            <p><strong>Status:</strong> <span class="status ${req.status === 'approved' || req.status === 'accepted' || req.status === 'delivered' ? 'approved' : 'pending'}">${req.status.charAt(0).toUpperCase() + req.status.slice(1)}</span></p>
+            <p><strong>Submitted:</strong> ${new Date(req.createdAt).toLocaleDateString()}</p>
+          `;
+          container.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Error fetching requests:", error);
+        document.getElementById("requestsContainer").innerHTML = "<p>Error loading requests.</p>";
+      }
+    }
+  </script>
+</head>
+
+<body class="dashboard-body">
+
+<div class="dashboard-wrapper">
+
+  <div class="dashboard-header">
+    <h2>User Dashboard</h2>
+    <button onclick="logout()" class="logout-btn">Logout</button>
+  </div>
+
+  <div class="dashboard-content">
+
+    <!-- Submit Food Request Card -->
+    <div class="card">
+      <h3>Submit Food Request</h3>
+
+      <form id="foodForm">
+        <input type="text" id="foodType" placeholder="Food Type (e.g. Meals, Rice, Vegetables)" required>
+
+        <input type="text" id="quantity" placeholder="Quantity (e.g. 20 plates, 5 kg)" required>
+
+        <textarea id="manualLocation" placeholder="Enter Address Manually (optional)"></textarea>
+
+        <button type="button" id="locationBtn" class="secondary-btn" onclick="getLocation()">
+          Use Live Location
+        </button>
+
+        <div id="map"></div>
+
+        <input type="text" id="finalLocation" placeholder="Selected Address" readonly required>
+
+        <button type="submit">Submit Request</button>
+      </form>
+
+      <p id="responseMsg"></p>
+    </div>
+
+    <!-- My Requests Card -->
+    <div class="card">
+      <h3>My Requests</h3>
+      <div id="requestsContainer" class="request-list">
+        <p>Loading your requests...</p>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+// ================= SUBMIT FOOD FORM =================
+
+document.getElementById("foodForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  const locationValue =
+    document.getElementById("manualLocation").value ||
+    document.getElementById("finalLocation").value;
+
+  const response = await fetch("http://localhost:5000/api/user/submit-food", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      foodType: document.getElementById("foodType").value,
+      quantity: document.getElementById("quantity").value,
+      location: locationValue
+    })
+  });
+
+  const data = await response.json();
+  const msgElement = document.getElementById("responseMsg");
+  msgElement.innerText = data.message;
+  msgElement.className = response.ok ? "success" : "error";
+
+  if (response.ok) {
+    document.getElementById("foodForm").reset();
+    fetchMyRequests();
+  }
+});
+
+// ================= INITIALIZE =================
+
+fetchMyRequests();
+
+</script>

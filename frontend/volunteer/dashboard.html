@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Volunteer Dashboard - FoodConnect</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body class="dashboard-body">
+
+<div class="dashboard-wrapper">
+
+  <div class="dashboard-header">
+    <h2>Volunteer Dashboard</h2>
+    <button onclick="logout()" class="logout-btn">Logout</button>
+  </div>
+
+  <div class="dashboard-content">
+
+    <!-- Available Requests Card -->
+    <div class="card">
+      <h3>Available Food Requests</h3>
+      <div id="availableRequests" class="request-list">
+        <p>Loading available requests...</p>
+      </div>
+    </div>
+
+    <!-- My Deliveries Card -->
+    <div class="card">
+      <h3>My Deliveries</h3>
+      <div id="myDeliveries" class="request-list">
+        <p>Loading your deliveries...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p id="message" style="color: green; margin-top: 20px; text-align: center;"></p>
+
+</div>
+
+<script>
+
+// ================= AUTH CHECK =================
+
+const token = localStorage.getItem("token");
+
+if(!token){
+  window.location.href = "login.html";
+}
+
+// ================= FETCH AVAILABLE REQUESTS =================
+
+async function fetchAvailableRequests() {
+  try {
+    const response = await fetch("http://localhost:5000/api/volunteer/approved-requests", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+
+    const requests = await response.json();
+    const container = document.getElementById("availableRequests");
+
+    if (!Array.isArray(requests) || requests.length === 0) {
+      container.innerHTML = "<p>No available requests at the moment.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+    requests.forEach(req => {
+      const div = document.createElement("div");
+      div.className = "request-item";
+      div.innerHTML = `
+        <p><strong>Food:</strong> ${req.foodType}</p>
+        <p><strong>Quantity:</strong> ${req.quantity}</p>
+        <p><strong>Location:</strong> ${req.location}</p>
+        <p><strong>Requester:</strong> ${req.userId ? req.userId.username : 'Unknown'} (${req.userId ? req.userId.mobile : 'N/A'})</p>
+        <p><strong>Submitted:</strong> ${new Date(req.createdAt).toLocaleDateString()}</p>
+        <button class='secondary-btn' onclick='acceptRequest("${req._id}")'>Accept Request</button>
+      `;
+      container.appendChild(div);
+    });
+  } catch (error) {
+    console.error("Error fetching requests:", error);
+    document.getElementById("availableRequests").innerHTML = "<p>Error loading requests.</p>";
+  }
+}
+
+// ================= FETCH MY DELIVERIES =================
+
+async function fetchMyDeliveries() {
+  try {
+    const response = await fetch("http://localhost:5000/api/volunteer/my-deliveries", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+
+    const requests = await response.json();
+    const container = document.getElementById("myDeliveries");
+
+    if (!Array.isArray(requests) || requests.length === 0) {
+      container.innerHTML = "<p>No deliveries assigned yet.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+    requests.forEach(req => {
+      const div = document.createElement("div");
+      div.className = "request-item";
+      div.innerHTML = `
+        <p><strong>Food:</strong> ${req.foodType}</p>
+        <p><strong>Quantity:</strong> ${req.quantity}</p>
+        <p><strong>Location:</strong> ${req.location}</p>
+        <p><strong>Requester:</strong> ${req.userId ? req.userId.username : 'Unknown'} (${req.userId ? req.userId.mobile : 'N/A'})</p>
+        <p><strong>Status:</strong> <span class="status ${req.status === 'delivered' ? 'approved' : 'pending'}">${req.status === 'delivered' ? 'Delivered' : 'In Progress'}</span></p>
+        <p><strong>Accepted:</strong> ${new Date(req.createdAt).toLocaleDateString()}</p>
+        ${req.status === 'accepted' ? `<button class='secondary-btn' onclick='markDelivered("${req._id}")'>Mark as Delivered</button>` : ''}
+      `;
+      container.appendChild(div);
+    });
+  } catch (error) {
+    console.error("Error fetching deliveries:", error);
+    document.getElementById("myDeliveries").innerHTML = "<p>Error loading deliveries.</p>";
+  }
+}
+
+// ================= ACCEPT REQUEST =================
+
+async function acceptRequest(id) {
+  try {
+    const response = await fetch(`http://localhost:5000/api/volunteer/accept-request/${id}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+
+    const data = await response.json();
+    const msgElement = document.getElementById("message");
+    msgElement.innerText = data.message;
+    msgElement.style.color = response.ok ? "green" : "red";
+
+    if (response.ok) {
+      fetchAvailableRequests();
+      fetchMyDeliveries();
+    }
+  } catch (error) {
+    console.error("Error accepting request:", error);
+    document.getElementById("message").innerText = "Error accepting request";
+    document.getElementById("message").style.color = "red";
+  }
+}
+
+// ================= MARK AS DELIVERED =================
+
+async function markDelivered(id) {
+  try {
+    const response = await fetch(`http://localhost:5000/api/volunteer/mark-delivered/${id}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+
+    const data = await response.json();
+    const msgElement = document.getElementById("message");
+    msgElement.innerText = data.message;
+    msgElement.style.color = response.ok ? "green" : "red";
+
+    if (response.ok) {
+      fetchMyDeliveries();
+    }
+  } catch (error) {
+    console.error("Error marking as delivered:", error);
+    document.getElementById("message").innerText = "Error updating delivery status";
+    document.getElementById("message").style.color = "red";
+  }
+}
+
+// ================= LOGOUT =================
+
+function logout(){
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+}
+
+// ================= INITIALIZE =================
+
+fetchAvailableRequests();
+fetchMyDeliveries();
+
+</script>
+
+</body>
+</html>

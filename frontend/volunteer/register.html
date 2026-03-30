@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Volunteer Register</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="auth-body">
+
+<div class="overlay"></div>
+
+<div class="auth-container">
+  <h2>Volunteer Registration</h2>
+
+  <form id="volunteerForm">
+
+    <input type="text" placeholder="Full Name" id="volunteerName" required>
+    <input type="text" placeholder="Gender" id="gender" required>
+    <input type="text" placeholder="Phone Number" id="phone" required>
+    <input type="email" placeholder="Email Address" id="email" required>
+    <input type="password" placeholder="Password" id="password" required>
+
+    <!-- Organization Type -->
+    <select id="orgType" required onchange="showFields()">
+      <option value="">Select Organization Type</option>
+      <option value="NGO">NGO</option>
+      <option value="NSS">NSS</option>
+      <option value="Individual">Individual</option>
+      <option value="Ashram">Ashram</option>
+    </select>
+
+    <!-- Dynamic Fields Container -->
+    <div id="dynamicFields"></div>
+
+    <button type="submit">Register</button>
+  </form>
+
+  <div id="message"></div>
+
+  <p>Already registered? 
+    <a href="login.html">Login</a>
+  </p>
+</div>
+
+<script>
+function showFields() {
+  const type = document.getElementById("orgType").value;
+  const container = document.getElementById("dynamicFields");
+  container.innerHTML = "";
+
+  if (type === "NGO") {
+    container.innerHTML = `
+      <input type="text" id="ngoAddress" placeholder="NGO Address" required>
+      <input type="text" id="ngoName" placeholder="NGO Name" required>
+      <input type="text" id="ngoReg" placeholder="Registration Number" required>
+    `;
+  }
+
+  else if (type === "NSS") {
+    container.innerHTML = `
+      <input type="text" id="nssAddress" placeholder="College Address" required>
+      <input type="text" id="collegeName" placeholder="College Name" required>
+      <input type="text" id="nssUnit" placeholder="NSS Unit Number" required>
+    `;
+  }
+
+  else if (type === "Individual") {
+    container.innerHTML = `
+      <input type="text" id="resAddress" placeholder="Residential Address" required>
+      <input type="text" id="aadhaar" placeholder="Aadhaar Number" required>
+    `;
+  }
+
+  else if (type === "Ashram") {
+    container.innerHTML = `
+      <input type="text" id="ashramAddress" placeholder="Ashram Address" required>
+      <input type="text" id="ashramName" placeholder="Ashram Name" required>
+    `;
+  }
+}
+
+document.getElementById("volunteerForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const volunteerName = document.getElementById("volunteerName").value.trim();
+  const gender = document.getElementById("gender").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const type = document.getElementById("orgType").value;
+  const message = document.getElementById("message");
+
+  let organizationDetails = "";
+
+  if (!volunteerName || !gender || !phone || !email || !password || !type) {
+    message.innerHTML = '<div style="color: red; text-align: center;">Please enter all required volunteer details.</div>';
+    return;
+  }
+
+  if (type === "NGO") {
+    organizationDetails = `
+      Address: ${document.getElementById("ngoAddress")?.value || ""},
+      NGO Name: ${document.getElementById("ngoName")?.value || ""},
+      Reg No: ${document.getElementById("ngoReg")?.value || ""}
+    `;
+  }
+
+  if (type === "NSS") {
+    organizationDetails = `
+      Address: ${document.getElementById("nssAddress")?.value || ""},
+      College: ${document.getElementById("collegeName")?.value || ""},
+      NSS Unit: ${document.getElementById("nssUnit")?.value || ""}
+    `;
+  }
+
+  if (type === "Individual") {
+    organizationDetails = `
+      Address: ${document.getElementById("resAddress")?.value || ""},
+      Aadhaar: ${document.getElementById("aadhaar")?.value || ""}
+    `;
+  }
+
+  if (type === "Ashram") {
+    organizationDetails = `
+      Address: ${document.getElementById("ashramAddress")?.value || ""},
+      Ashram Name: ${document.getElementById("ashramName")?.value || ""}
+    `;
+  }
+
+  const res = await fetch("http://localhost:5000/api/volunteer/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name: volunteerName,
+      gender,
+      phone,
+      email,
+      password,
+      organizationType: type,
+      organizationDetails
+    })
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    message.innerHTML = '<div style="color: green; font-weight: bold; text-align: center;">✓ Registered Successfully</div>';
+    setTimeout(() => window.location.href = "login.html", 2000);
+  } else {
+    message.innerHTML = '<div style="color: red; text-align: center;">' + data.message + '</div>';
+  }
+});
+</script>
+
+</body>
+</html>

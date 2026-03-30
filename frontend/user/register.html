@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Register</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="auth-body">
+
+<div class="overlay"></div>
+
+<div class="auth-container">
+  <h2>User Registration</h2>
+
+  <form id="registerForm">
+    <input type="text" placeholder="Username" id="username" required>
+    <input type="email" placeholder="Email" id="email" required>
+    <input type="text" placeholder="Mobile Number" id="mobile" required>
+    <input type="password" placeholder="Password" id="password" required>
+
+    <button type="submit">Register</button>
+  </form>
+
+  <div id="message"></div>
+
+  <p>Already have an account? 
+    <a href="login.html">Login</a>
+  </p>
+</div>
+
+<script>
+document.getElementById("registerForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  try {
+
+    const response = await fetch("http://localhost:5000/api/user/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: document.getElementById("username").value,
+        email: document.getElementById("email").value,
+        mobile: document.getElementById("mobile").value,
+        password: document.getElementById("password").value
+      })
+    });
+
+    const data = await response.json();
+
+    if(response.status === 200){
+      const message = document.getElementById("message");
+      message.innerHTML = '<div style="color: green; font-weight: bold; text-align: center;">✓ Registered Successfully</div>';
+      setTimeout(() => window.location.replace("login.html"), 2000);
+
+    } else {
+      const message = document.getElementById("message");
+      message.innerHTML = '<div style="color: red; text-align: center;">' + data.message + '</div>';
+    }
+
+  } catch(error){
+    console.error(error);
+    alert("Server not responding.");
+  }
+});
+</script>
+
+    
+
+
+</body>
+</html>
