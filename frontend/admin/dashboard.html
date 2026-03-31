@@ -215,7 +215,7 @@ async function approveRequest(id) {
 
 function logout() {
   localStorage.removeItem("token");
-  window.location.href = "login.html";
+  window.location.replace("../index.html");
 }
 
 function loadDashboard() {
