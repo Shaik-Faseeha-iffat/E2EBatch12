@@ -52,7 +52,7 @@ if(!token){
 
 async function fetchAvailableRequests() {
   try {
-    const response = await fetch("http://localhost:5000/api/volunteer/approved-requests", {
+    const response = await fetch("https://foodconnect3.onrender.com/api/volunteer/approved-requests", {
       headers: {
         "Authorization": "Bearer " + token
       }
