@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const crypto = require('crypto');
 const Volunteer = require('../models/Volunteer');
 const FoodRequest = require('../models/FoodRequest');
 const bcrypt = require('bcryptjs');
@@ -8,10 +9,14 @@ const verifyToken = require('../middleware/auth');
 /* Register */
 router.post('/register', async (req, res) => {
   try {
-    const { name, gender, phone, email, password, organizationType, organizationDetails } = req.body;
+    const { name, gender, phone, email, password, confirmPassword, organizationType, organizationDetails } = req.body;
 
-    if (!name || !phone || !email || !password || !organizationType) {
+    if (!name || !phone || !email || !password || !confirmPassword || !organizationType) {
       return res.status(400).json({ message: "Please fill all required volunteer details" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -43,23 +48,98 @@ router.post('/register', async (req, res) => {
 
 /* Login */
 router.post('/login', async (req, res) => {
-  const normalizedEmail = (req.body.email || '').trim().toLowerCase();
-  const volunteer = await Volunteer.findOne({ email: normalizedEmail });
-  if (!volunteer) return res.status(400).json({message: "Volunteer not found"});
+  try {
+    const normalizedEmail = (req.body.email || '').trim().toLowerCase();
+    const password = req.body.password || '';
 
-  const valid = await bcrypt.compare(req.body.password, volunteer.password);
-  if (!valid) return res.status(400).json({message: "Invalid password"});
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
 
-  if (!volunteer.approved)
-    return res.status(403).json({message: "Waiting for Admin Approval"});
+    const volunteer = await Volunteer.findOne({ email: normalizedEmail });
+    if (!volunteer) return res.status(400).json({message: "Volunteer not found"});
 
-  const token = jwt.sign(
-    { id: volunteer._id, role: "volunteer" },
-    process.env.JWT_SECRET,
-    { expiresIn: "2h" }
-  );
+    const valid = await bcrypt.compare(password, volunteer.password);
+    if (!valid) return res.status(400).json({message: "Invalid password"});
 
-  res.json({ token, message: "Login Successful" });
+    if (!volunteer.approved)
+      return res.status(403).json({message: "Waiting for Admin Approval"});
+
+    const token = jwt.sign(
+      { id: volunteer._id, role: "volunteer" },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({ token, message: "Login Successful" });
+  } catch (error) {
+    console.error("Volunteer Login Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+/* Forgot Password */
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const email = (req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const volunteer = await Volunteer.findOne({ email });
+
+    if (!volunteer) {
+      return res.status(404).json({ message: "Volunteer not found" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    volunteer.resetPasswordToken = resetToken;
+    volunteer.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await volunteer.save();
+
+    res.json({
+      message: "Volunteer verified. Continue to reset your password.",
+      resetToken
+    });
+  } catch (error) {
+    console.error("Volunteer Forgot Password Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+/* Reset Password */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password, confirmPassword } = req.body;
+
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({ message: "Token and passwords are required" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const volunteer = await Volunteer.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+
+    if (!volunteer) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    volunteer.password = await bcrypt.hash(password, 10);
+    volunteer.resetPasswordToken = null;
+    volunteer.resetPasswordExpires = null;
+    await volunteer.save();
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Volunteer Reset Password Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
 /* View Approved Requests */

@@ -8,7 +8,9 @@ const volunteerSchema = new mongoose.Schema({
   gender: { type: String, trim: true },
   organizationType: { type: String, required: true },
   organizationDetails: { type: String, default: "" },
-  approved: { type: Boolean, default: false }
+  approved: { type: Boolean, default: false },
+  resetPasswordToken: { type: String, default: null },
+  resetPasswordExpires: { type: Date, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Volunteer', volunteerSchema);

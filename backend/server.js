@@ -38,7 +38,7 @@ mongoose.connect(mongoUri, {
 
 // ================= ROUTES =================
 app.use("/api/user", require("./routes/userRoutes"));
-app.use("/api/volunteer", require("./routes/volunteerRoutes"));
+app.use("/api/volunteer", require("./routes/VolunteerRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 
 

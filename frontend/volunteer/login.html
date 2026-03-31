@@ -18,30 +18,38 @@
   </form>
 
   <div id="message"></div>
+
+  <p><a href="forgot-password.html">Forgot Password?</a></p>
+  <p>New volunteer? <a href="register.html">Register</a></p>
 </div>
 
 <script>
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const res = await fetch("http://localhost:5000/api/volunteer/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      email: email.value,
-      password: password.value
-    })
-  });
-
-  const data = await res.json();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
   const message = document.getElementById("message");
 
-  if(data.token){
-    message.innerHTML = '<div style="color: green; font-weight: bold; text-align: center;">✓ Login Successful</div>';
-    localStorage.setItem("token", data.token);
-    setTimeout(() => window.location.href = "dashboard.html", 2000);
-  } else {
-    message.innerHTML = '<div style="color: red; text-align: center;">' + data.message + '</div>';
+  try {
+    const res = await fetch("http://localhost:5000/api/volunteer/login", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (data.token) {
+      message.innerHTML = '<div style="color: green; font-weight: bold; text-align: center;">✓ Login Successful</div>';
+      localStorage.setItem("token", data.token);
+      setTimeout(() => window.location.href = "dashboard.html", 2000);
+    } else {
+      message.innerHTML = '<div style="color: red; text-align: center;">' + (data.message || "Login failed") + '</div>';
+    }
+  } catch (error) {
+    console.error(error);
+    message.innerHTML = '<div style="color: red; text-align: center;">Server not responding.</div>';
   }
 });
 </script>

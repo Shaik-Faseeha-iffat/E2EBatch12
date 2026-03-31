@@ -16,13 +16,14 @@
     <input type="email" placeholder="Email" id="email" required>
     <input type="text" placeholder="Mobile Number" id="mobile" required>
     <input type="password" placeholder="Password" id="password" required>
+    <input type="password" placeholder="Confirm Password" id="confirmPassword" required>
 
     <button type="submit">Register</button>
   </form>
 
   <div id="message"></div>
 
-  <p>Already have an account? 
+  <p>Already have an account?
     <a href="login.html">Login</a>
   </p>
 </div>
@@ -31,42 +32,47 @@
 document.getElementById("registerForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  try {
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const mobile = document.getElementById("mobile").value.trim();
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const message = document.getElementById("message");
 
+  if (password !== confirmPassword) {
+    message.innerHTML = '<div style="color: red; text-align: center;">Passwords do not match</div>';
+    return;
+  }
+
+  try {
     const response = await fetch("http://localhost:5000/api/user/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        username: document.getElementById("username").value,
-        email: document.getElementById("email").value,
-        mobile: document.getElementById("mobile").value,
-        password: document.getElementById("password").value
+        username,
+        email,
+        mobile,
+        password,
+        confirmPassword
       })
     });
 
     const data = await response.json();
 
-    if(response.status === 200){
-      const message = document.getElementById("message");
+    if (response.status === 200) {
       message.innerHTML = '<div style="color: green; font-weight: bold; text-align: center;">✓ Registered Successfully</div>';
       setTimeout(() => window.location.replace("login.html"), 2000);
-
     } else {
-      const message = document.getElementById("message");
-      message.innerHTML = '<div style="color: red; text-align: center;">' + data.message + '</div>';
+      message.innerHTML = '<div style="color: red; text-align: center;">' + (data.message || "Registration failed") + '</div>';
     }
-
-  } catch(error){
+  } catch (error) {
     console.error(error);
-    alert("Server not responding.");
+    message.innerHTML = '<div style="color: red; text-align: center;">Server not responding.</div>';
   }
 });
 </script>
-
-    
-
 
 </body>
 </html>

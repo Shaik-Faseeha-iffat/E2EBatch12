@@ -20,7 +20,8 @@
 
   <div id="message"></div>
 
-  <p>Don't have an account? 
+  <p><a href="forgot-password.html">Forgot Password?</a></p>
+  <p>Don't have an account?
     <a href="register.html">Register</a>
   </p>
 </div>
@@ -29,8 +30,9 @@
 document.getElementById("loginForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  const username = document.getElementById("username").value;
+  const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
+  const message = document.getElementById("message");
 
   try {
     const response = await fetch("http://localhost:5000/api/user/login", {
@@ -44,17 +46,15 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     const data = await response.json();
 
     if (response.status === 200 && data.token) {
-      const message = document.getElementById("message");
       message.innerHTML = '<div style="color: green; font-weight: bold; text-align: center;">✓ Login Successful</div>';
       localStorage.setItem("token", data.token);
       setTimeout(() => window.location.href = "dashboard.html", 2000);
     } else {
-      const message = document.getElementById("message");
       message.innerHTML = '<div style="color: red; text-align: center;">' + (data.message || "Login failed") + '</div>';
     }
   } catch (error) {
     console.error(error);
-    document.getElementById("errorMsg").innerText = "Server error. Try again.";
+    message.innerHTML = '<div style="color: red; text-align: center;">Server error. Try again.</div>';
   }
 });
 </script>

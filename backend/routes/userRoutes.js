@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const User = require("../models/User");
 const FoodRequest = require("../models/FoodRequest");
@@ -10,24 +11,41 @@ const verifyToken = require("../middleware/auth");
 // ================= USER REGISTER =================
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, mobile, password } = req.body;
+    const { username, email, mobile, password, confirmPassword } = req.body;
 
-    if (!username || !email || !mobile || !password) {
+    if (!username || !email || !mobile || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ username });
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const normalizedUsername = username.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedMobile = mobile.trim();
+
+    const existingUser = await User.findOne({
+      $or: [
+        { username: normalizedUsername },
+        { email: normalizedEmail }
+      ]
+    });
 
     if (existingUser) {
-      return res.status(400).json({ message: "Username already exists" });
+      return res.status(400).json({
+        message: existingUser.username === normalizedUsername
+          ? "Username already exists"
+          : "Email already exists"
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await User.create({
-      username,
-      email,
-      mobile,
+      username: normalizedUsername,
+      email: normalizedEmail,
+      mobile: normalizedMobile,
       password: hashedPassword
     });
 
@@ -49,7 +67,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Username and password required" });
     }
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username: username.trim() });
 
     if (!user) {
       return res.status(400).json({ message: "User not found" });
@@ -71,6 +89,81 @@ router.post("/login", async (req, res) => {
 
   } catch (error) {
     console.error("Login Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+
+// ================= FORGOT PASSWORD =================
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { identifier } = req.body;
+
+    if (!identifier) {
+      return res.status(400).json({ message: "Username or email is required" });
+    }
+
+    const trimmedIdentifier = identifier.trim();
+
+    const user = await User.findOne({
+      $or: [
+        { username: trimmedIdentifier },
+        { email: trimmedIdentifier.toLowerCase() }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    res.status(200).json({
+      message: "User verified. Continue to reset your password.",
+      resetToken
+    });
+
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+
+// ================= RESET PASSWORD =================
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, password, confirmPassword } = req.body;
+
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({ message: "Token and passwords are required" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successful" });
+
+  } catch (error) {
+    console.error("Reset Password Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
