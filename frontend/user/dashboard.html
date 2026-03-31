@@ -126,7 +126,7 @@
     // ================= FETCH REQUESTS FUNCTION =================
     async function fetchMyRequests() {
       try {
-        const response = await fetch("http://localhost:5000/api/user/my-requests", {
+        const response = await fetch("https://foodconnect-ecqk.onrender.com/api/user/my-requests", {
           headers: {
             "Authorization": "Bearer " + token
           }
@@ -220,7 +220,7 @@ document.getElementById("foodForm").addEventListener("submit", async function(e)
     document.getElementById("manualLocation").value ||
     document.getElementById("finalLocation").value;
 
-  const response = await fetch("http://localhost:5000/api/user/submit-food", {
+  const response = await fetch("https://foodconnect-ecqk.onrender.com/api/user/submit-food", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
