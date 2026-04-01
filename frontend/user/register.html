@@ -15,8 +15,11 @@
     <input type="text" placeholder="Username" id="username" required>
     <input type="email" placeholder="Email" id="email" required>
     <input type="text" placeholder="Mobile Number" id="mobile" required>
+    <div id="mobileError" class="error-message"></div>
     <input type="password" placeholder="Password" id="password" required>
+    <div id="passwordError" class="error-message"></div>
     <input type="password" placeholder="Confirm Password" id="confirmPassword" required>
+    <div id="confirmPasswordError" class="error-message"></div>
 
     <button type="submit">Register</button>
   </form>
@@ -39,8 +42,30 @@ document.getElementById("registerForm").addEventListener("submit", async functio
   const confirmPassword = document.getElementById("confirmPassword").value;
   const message = document.getElementById("message");
 
+  // Clear previous error messages
+  document.getElementById("mobileError").textContent = "";
+  document.getElementById("passwordError").textContent = "";
+  document.getElementById("confirmPasswordError").textContent = "";
+
+  // Validate mobile number - exactly 10 digits
+  if (!/^\d{10}$/.test(mobile)) {
+    document.getElementById("mobileError").textContent = "❌ Mobile number must be exactly 10 digits!";
+    return;
+  }
+
+  // Validate password - minimum 6 characters and at least one special character
+  if (password.length < 6) {
+    document.getElementById("passwordError").textContent = "❌ Password must be at least 6 characters long!";
+    return;
+  }
+
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(password)) {
+    document.getElementById("passwordError").textContent = "❌ Password must contain at least one special character!";
+    return;
+  }
+
   if (password !== confirmPassword) {
-    message.innerHTML = '<div style="color: red; text-align: center;">Passwords do not match</div>';
+    document.getElementById("confirmPasswordError").textContent = "❌ Passwords do not match!";
     return;
   }
 
