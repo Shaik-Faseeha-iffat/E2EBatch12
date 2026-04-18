@@ -9,38 +9,55 @@
 
 <div class="dashboard-wrapper">
 
-  <div class="dashboard-header admin-header">
+  <div class="dashboard-header">
     <h2>Admin Dashboard</h2>
-    <button onclick="logout()" class="logout-btn compact-logout">⎋ Logout</button>
+    <button class="dashboard-header-logout" onclick="logout()">Logout</button>
   </div>
 
   <div class="dashboard-content admin-grid">
 
-    <div class="card admin-card top-card">
+    <div class="card admin-card">
       <h3>👥 Pending Volunteers</h3>
       <div id="volunteersList">
         <p class="info">Loading volunteers...</p>
       </div>
     </div>
 
-    <div class="card admin-card top-card">
+    <div class="card admin-card">
       <h3>📦 Pending Food Requests</h3>
       <div id="requestsList">
         <p class="info">Loading requests...</p>
       </div>
     </div>
 
-    <div class="card admin-card">
-      <h3>✅ Approved Volunteers</h3>
-      <div id="approvedVolunteersList">
-        <p class="info">Loading approved volunteers...</p>
+    <div class="card admin-card collapsible-card">
+      <div class="collapsible-header" onclick="toggleCollapse('approvedSections')">
+        <span>📂 Approved items</span>
+        <span class="collapse-icon">▼</span>
       </div>
-    </div>
-
-    <div class="card admin-card">
-      <h3>🧾 Approved Food Requests</h3>
-      <div id="approvedRequestsList">
-        <p class="info">Loading approved requests...</p>
+      <div id="approvedSections" class="collapsible-body" style="display: none;">
+        <div class="approved-section">
+          <div class="section-title" onclick="toggleCollapse('approvedVolunteers')">
+            <span>✅ Approved Volunteers</span>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div id="approvedVolunteers" class="collapsible-body" style="display: none;">
+            <div id="approvedVolunteersList">
+              <p class="info">Loading approved volunteers...</p>
+            </div>
+          </div>
+        </div>
+        <div class="approved-section">
+          <div class="section-title" onclick="toggleCollapse('approvedRequests')">
+            <span>✅ Approved Food Requests</span>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div id="approvedRequests" class="collapsible-body" style="display: none;">
+            <div id="approvedRequestsList">
+              <p class="info">Loading approved requests...</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -63,28 +80,47 @@ function formatStatus(status) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function renderVolunteerList(containerId, volunteers, isApprovedList = false) {
+function renderVolunteerList(containerId, volunteers) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
 
   if (!Array.isArray(volunteers) || volunteers.length === 0) {
-    container.innerHTML = `<p class="info">No ${isApprovedList ? "approved" : "pending"} volunteers found.</p>`;
+    container.innerHTML = `<p class="info">No volunteers found.</p>`;
     return;
   }
 
   volunteers.forEach(vol => {
     const div = document.createElement("div");
-    div.className = "list-item";
+    div.className = "volunteer-row";
     const volunteerName = vol.name || vol.fullName || vol.username || (vol.email ? vol.email.split('@')[0] : "Volunteer");
+    const statusClass = vol.approved ? "approved" : "pending";
+    const statusText = vol.approved ? "Approved" : "Pending";
+    const showApprove = containerId !== "approvedVolunteersList" && !vol.approved;
 
     div.innerHTML = `
-      <div class="item-details">
-        <p><strong>Volunteer Name:</strong> ${volunteerName}</p>
+      <div class="volunteer-summary">
+        <div class="volunteer-meta">
+          <div class="volunteer-info">
+            <span class="volunteer-name">${volunteerName}</span>
+            <span class="volunteer-email">${vol.email || "N/A"}</span>
+            <span class="volunteer-phone">${vol.phone || "N/A"}</span>
+          </div>
+          <button class="toggle-details-btn" onclick="toggleDetails('details-${vol._id}')">View Details</button>
+        </div>
+        <div class="volunteer-actions">
+          <span class="status ${statusClass}">${statusText}</span>
+          ${showApprove ? `<button class="approve-btn" onclick="approveVolunteer('${vol._id}')">Approve</button><button class="reject-btn" onclick="rejectVolunteer('${vol._id}')">Reject</button>` : ""}
+        </div>
+      </div>
+      <div class="volunteer-details" id="details-${vol._id}" style="display: none;">
+        <p><strong>Full Name:</strong> ${vol.name || "N/A"}</p>
         <p><strong>Email:</strong> ${vol.email || "N/A"}</p>
         <p><strong>Phone:</strong> ${vol.phone || "N/A"}</p>
-        <p><strong>Status:</strong> <span class="status ${vol.approved ? "approved" : "pending"}">${vol.approved ? "Approved" : "Pending"}</span></p>
+        <p><strong>Type:</strong> ${vol.type || "N/A"}</p>
+        <p><strong>Gender:</strong> ${vol.gender || "N/A"}</p>
+        <p><strong>Address:</strong> ${vol.address || "N/A"}</p>
+        <p><strong>Registered:</strong> ${new Date(vol.createdAt).toLocaleDateString()}</p>
       </div>
-      ${!isApprovedList ? `<div class="item-actions"><button class="secondary-btn" onclick="approveVolunteer('${vol._id}')">Approve</button></div>` : ""}
     `;
     container.appendChild(div);
   });
@@ -102,20 +138,30 @@ function renderRequestList(containerId, requests, isApprovedList = false) {
   requests.forEach(req => {
     const currentStatus = req.status || "pending";
     const statusClass = ["approved", "accepted", "delivered"].includes(currentStatus) ? "approved" : "pending";
+    const userName = req.userId ? req.userId.username || req.userId.email || "Unknown User" : "Unknown User";
+    const userEmail = req.userId ? req.userId.email || "No email" : "No email";
 
     const div = document.createElement("div");
-    div.className = "list-item";
+    div.className = "request-row";
     div.innerHTML = `
-      <div class="item-details">
-        <p><strong>Username:</strong> ${req.userId ? req.userId.username : "Unknown User"}</p>
-        <p><strong>Email:</strong> ${req.userId ? req.userId.email : "No email"}</p>
+      <div class="request-summary">
+        <div class="request-meta">
+          <span><strong>${userName}</strong></span>
+          <button class="toggle-details-btn" onclick="toggleDetails('details-req-${req._id}')">View Details</button>
+        </div>
+        <div class="request-actions">
+          <span class="status ${statusClass}">${formatStatus(currentStatus)}</span>
+          ${!isApprovedList ? `<button class="approve-btn" onclick="approveRequest('${req._id}')">Approve</button><button class="reject-btn" onclick="rejectRequest('${req._id}')">Reject</button>` : ""}
+        </div>
+      </div>
+      <div class="request-details" id="details-req-${req._id}" style="display: none;">
         <p><strong>Food Type:</strong> ${req.foodType || "N/A"}</p>
         <p><strong>Quantity:</strong> ${req.quantity || "N/A"}</p>
         <p><strong>Location:</strong> ${req.location || "N/A"}</p>
-        <p><strong>Status:</strong> <span class="status ${statusClass}">${formatStatus(currentStatus)}</span></p>
         ${req.volunteerId ? `<p><strong>Volunteer:</strong> ${req.volunteerId.name || req.volunteerId.email || "Assigned"}</p>` : ""}
+        <p><strong>Status:</strong> ${formatStatus(currentStatus)}</p>
+        <p><strong>Requested:</strong> ${new Date(req.createdAt).toLocaleDateString()}</p>
       </div>
-      ${!isApprovedList ? `<div class="item-actions"><button class="secondary-btn" onclick="approveRequest('${req._id}')">Approve</button></div>` : ""}
     `;
     container.appendChild(div);
   });
@@ -127,21 +173,21 @@ async function fetchVolunteers() {
       headers: { Authorization: "Bearer " + token }
     });
     const volunteers = await res.json();
-    renderVolunteerList("volunteersList", volunteers, false);
+    renderVolunteerList("volunteersList", volunteers);
   } catch (error) {
     document.getElementById("volunteersList").innerHTML = "<p class='info'>Error loading volunteers.</p>";
   }
 }
 
-async function fetchApprovedVolunteers() {
-  try {
-    const res = await fetch(`${API_BASE}/approved-volunteers`, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    const volunteers = await res.json();
-    renderVolunteerList("approvedVolunteersList", volunteers, true);
-  } catch (error) {
-    document.getElementById("approvedVolunteersList").innerHTML = "<p class='info'>Error loading approved volunteers.</p>";
+function toggleDetails(id) {
+  const details = document.getElementById(id);
+  const btn = details.previousElementSibling.querySelector('.toggle-details-btn');
+  if (details.style.display === 'none' || details.style.display === '') {
+    details.style.display = 'block';
+    btn.classList.add('open');
+  } else {
+    details.style.display = 'none';
+    btn.classList.remove('open');
   }
 }
 
@@ -169,6 +215,27 @@ async function fetchApprovedRequests() {
   }
 }
 
+async function fetchApprovedVolunteers() {
+  try {
+    const res = await fetch(`${API_BASE}/approved-volunteers`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const volunteers = await res.json();
+    renderVolunteerList("approvedVolunteersList", volunteers);
+  } catch (error) {
+    document.getElementById("approvedVolunteersList").innerHTML = "<p class='info'>Error loading approved volunteers.</p>";
+  }
+}
+
+function toggleCollapse(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  const icon = section.previousElementSibling?.querySelector('.collapse-icon');
+  const isHidden = section.style.display === 'none' || section.style.display === '';
+  section.style.display = isHidden ? 'block' : 'none';
+  if (icon) icon.innerText = isHidden ? '▲' : '▼';
+}
+
 async function approveVolunteer(id) {
   try {
     const res = await fetch(`${API_BASE}/approve-volunteer/${id}`, {
@@ -187,6 +254,28 @@ async function approveVolunteer(id) {
   } catch (error) {
     const message = document.getElementById("message");
     message.innerText = "Error approving volunteer.";
+    message.style.color = "#dc2626";
+  }
+}
+
+async function rejectVolunteer(id) {
+  try {
+    const res = await fetch(`${API_BASE}/reject-volunteer/${id}`, {
+      method: "PUT",
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const data = await res.json();
+    const message = document.getElementById("message");
+    message.innerText = data.message || "Volunteer rejected successfully.";
+    message.style.color = res.ok ? "#dc2626" : "#dc2626";
+
+    if (res.ok) {
+      loadDashboard();
+    }
+  } catch (error) {
+    const message = document.getElementById("message");
+    message.innerText = "Error rejecting volunteer.";
     message.style.color = "#dc2626";
   }
 }
@@ -213,6 +302,28 @@ async function approveRequest(id) {
   }
 }
 
+async function rejectRequest(id) {
+  try {
+    const res = await fetch(`${API_BASE}/reject-request/${id}`, {
+      method: "PUT",
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const data = await res.json();
+    const message = document.getElementById("message");
+    message.innerText = data.message || "Request rejected successfully.";
+    message.style.color = res.ok ? "#dc2626" : "#dc2626";
+
+    if (res.ok) {
+      loadDashboard();
+    }
+  } catch (error) {
+    const message = document.getElementById("message");
+    message.innerText = "Error rejecting request.";
+    message.style.color = "#dc2626";
+  }
+}
+
 function logout() {
   localStorage.removeItem("token");
   window.location.replace("../index.html");
@@ -220,9 +331,9 @@ function logout() {
 
 function loadDashboard() {
   fetchVolunteers();
-  fetchApprovedVolunteers();
   fetchRequests();
   fetchApprovedRequests();
+  fetchApprovedVolunteers();
 }
 
 loadDashboard();

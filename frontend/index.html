@@ -13,10 +13,13 @@
     <div class="sub-title">Smart Food Redistribution System</div>
   </div>
 
-  <nav>
+  <nav class="navbar-nav">
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
     <a href="impact.html">Impact</a>
+    <button onclick="logout()" class="navbar-logout-btn" id="logoutBtn" style="display:none;">
+      <span>Logout</span>
+    </button>
   </nav>
 </header>
 
@@ -42,8 +45,8 @@ Together we fight hunger&nbsp;&nbsp;&nbsp;&nbsp;•
     <h1 class="hero-brand">Food<span>Connect</span></h1>
 
     <div class="role-buttons">
-      <a href="user/register.html">User</a>
-      <a href="volunteer/register.html">Volunteer</a>
+      <a href="user/login.html">User</a>
+      <a href="volunteer/login.html">Volunteer</a>
       <a href="admin/login.html">Admin</a>
     </div>
   </div>
@@ -53,6 +56,19 @@ Together we fight hunger&nbsp;&nbsp;&nbsp;&nbsp;•
 <footer class="footer">
   © 2026 FoodConnect | Smart Food Redistribution System
 </footer>
+
+<script>
+  // Show logout button if user is authenticated
+  const token = localStorage.getItem("token");
+  if (token) {
+    document.getElementById("logoutBtn").style.display = "inline-flex";
+  }
+  
+  function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "index.html";
+  }
+</script>
 
 </body>
 </html>
