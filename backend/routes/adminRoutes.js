@@ -50,6 +50,12 @@ router.put('/approve-volunteer/:id', requireAdmin, async (req, res) => {
   res.json({ message: "Volunteer Approved" });
 });
 
+/* Reject Volunteer */
+router.put('/reject-volunteer/:id', requireAdmin, async (req, res) => {
+  await Volunteer.findByIdAndUpdate(req.params.id, { approved: false, status: 'rejected' });
+  res.json({ message: "Volunteer Rejected" });
+});
+
 /* View Pending Food Requests */
 router.get('/requests', requireAdmin, async (req, res) => {
   const requests = await FoodRequest.find({ status: 'pending' })
@@ -71,6 +77,12 @@ router.get('/approved-requests', requireAdmin, async (req, res) => {
 router.put('/approve-request/:id', requireAdmin, async (req, res) => {
   await FoodRequest.findByIdAndUpdate(req.params.id, { approved: true, status: 'approved' });
   res.json({ message: "Request Approved" });
+});
+
+/* Reject Request */
+router.put('/reject-request/:id', requireAdmin, async (req, res) => {
+  await FoodRequest.findByIdAndUpdate(req.params.id, { status: 'rejected' });
+  res.json({ message: "Request Rejected" });
 });
 
 module.exports = router;
